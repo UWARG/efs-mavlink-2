@@ -6,6 +6,13 @@
 // gcc -g Airside_Functions.cpp
 // a.out
 
+// to run the test with cmake:
+// mkdir build, cd build
+// cmake ..
+// make
+// execute generated target
+
+
 // refer to this page for the stucture of mavlink messages 
 // https://mavlink.io/en/guide/serialization.html
 
