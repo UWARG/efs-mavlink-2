@@ -19,7 +19,7 @@
 // The decoder and encoder only support GPS and gimbal control, other simpler commands will be taken
 // care of by the Xbee communication directly
 /**************************************************************************************************/
-
+#include <stdlib.h>
 #include "Mavlink2_lib/common/mavlink.h"
 #include "Airside_Functions.hpp"
 
@@ -141,7 +141,7 @@ mavlink_decoding_status_t Mavlink_airside_decoder(int channel, uint8_t incomingB
                         {
                             one_byte_uint_cmd_t command;
                             command.cmd = global_position.hdg;
-
+                            //telemetryData = (uint8_t*)malloc(sizeof(one_byte_uint_cmd_t));
                             memcpy((void*) telemetryData, (void*) &command, sizeof(one_byte_uint_cmd_t));
                             status = MAVLINK_DECODING_OKAY;
                         }
@@ -285,91 +285,51 @@ mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_t msgID, mavl
     unsigned char* ptr_in_byte = (unsigned char *) &encoded_msg_original;
     char message_buffer[message_len];
 
+    uint8_t start_index = 0;
     for( int i = 0; i < message_len; i++)
     {
 
         if (ptr_in_byte[i] == 0xfd) //0xfd, starting byte
         {
-            for(int r = 0; r < message_len; r++)
+            start_index = i;
+            for(int r = 0; r < message_len-2; r++)
             {
                 message_buffer[r] = ptr_in_byte[r+i];
-                //printf("copying byte: %d / %d   |   current byte : %hhx\n", r, message_len, message_buffer[r]);
+                printf("copying byte: %d / %d   |   current byte : %hhx\n", r, message_len, message_buffer[r]);
             }
             break;
         }
+
         else if (i == message_len-1)
         {
             return MAVLINK_ENCODING_FAIL;
         }
     }
 
-    memcpy(message, message_buffer, message_len);
+    if (start_index > 1)
+    {
+        for (int i = 0; i<2;i++)
+        {
+            message_buffer[message_len-2+i] = ptr_in_byte[start_index-2+i]; // load the last 2 checksum bytes
+            printf("copying byte: %d / %d   |   current byte : %hhx\n", message_len-2+i, message_len, message_buffer[message_len-2+i]);
+        }
+        //message = (mavlink_message_t*) malloc(message_len);
+        memcpy(message, message_buffer, message_len);
 
-    return MAVLINK_ENCODING_OKAY;
+        return MAVLINK_ENCODING_OKAY;
+    }
+    else
+    {
+        return MAVLINK_ENCODING_FAIL;
+    }
 }
 
-//--------------------------------------custom decoder and encoders for specific functions---------------------------------
-
-uint16_t custom_mavlink_msg__begin_takeoff_command_encode(uint8_t system_id, uint8_t component_id, mavlink_message_t* message, const mavlink_custom_cmd_takeoff_t* struct_ptr)
-{
-
-    mavlink_custom_cmd_takeoff_t cmd;
-    cmd.beginTakeoff = struct_ptr->beginTakeoff;
-
-    memcpy(_MAV_PAYLOAD_NON_CONST(message), &cmd, MAVLINK_MSG_ID_TAKEOFF_CMD_LEN); //TODO look into the length calculation
-
-    message->msgid = MAVLINK_MSG_ID_TAKEOFF_CMD;
-
-    uint16_t message_len = mavlink_finalize_message(    message, 
-                                                        system_id, 
-                                                        component_id, 
-                                                        MAVLINK_MSG_ID_TAKEOFF_CMD_MIN_LEN, 
-                                                        MAVLINK_MSG_ID_TAKEOFF_CMD_LEN, 
-                                                        MAVLINK_MSG_ID_GLOBAL_POSITION_INT_CRC);
-
-    return message_len;
-}
-
-
-void custom_mavlink_msg__begin_takeoff_command_decode(const mavlink_message_t* message, mavlink_custom_cmd_takeoff_t* takeoff_command)
-{
-    uint8_t len = message->len < MAVLINK_MSG_ID_TAKEOFF_CMD_LEN? message->len : MAVLINK_MSG_ID_TAKEOFF_CMD_LEN;
-    memset(takeoff_command, 0, MAVLINK_MSG_ID_TAKEOFF_CMD_LEN);
-    memcpy(takeoff_command, _MAV_PAYLOAD(message), len);
-}
-
-//this needs a proper crc_extra to work
-uint16_t custom_fcn__calculate_crc(mavlink_message_t* msg, uint8_t crc_extra)
-{
-    uint8_t buf[MAVLINK_CORE_HEADER_LEN+1];
-    uint8_t header_len = MAVLINK_CORE_HEADER_LEN+1;
-
-	// form the header as a byte array for the crc
-	buf[0] = msg->magic;
-	buf[1] = msg->len;
-    buf[2] = msg->incompat_flags;
-    buf[3] = msg->compat_flags;
-    buf[4] = msg->seq;
-    buf[5] = msg->sysid;
-    buf[6] = msg->compid;
-    buf[7] = msg->msgid & 0xFF;
-    buf[8] = (msg->msgid >> 8) & 0xFF;
-    buf[9] = (msg->msgid >> 16) & 0xFF;
-
-	
-	uint16_t checksum = crc_calculate(&buf[1], header_len-1);
-	crc_accumulate_buffer(&checksum, _MAV_PAYLOAD(msg), msg->len);
-	crc_accumulate(crc_extra, &checksum);
-	mavlink_ck_a(msg) = (uint8_t)(checksum & 0xFF);
-	mavlink_ck_b(msg) = (uint8_t)(checksum >> 8);
-
-	return checksum;
-}
 //---------------------------------------- tests -----------------------------------------------------------------------------
 //an example of how to use the encoder and decoder
 
 int test__encode_then_decode(void)
 {
+    printf("put printf here affect message, random bytes inserted\n");
 
    PIGO_GPS_LANDING_SPOT_t landing_spot = {
        1,
@@ -412,10 +372,8 @@ int test__encode_then_decode(void)
 
 
     mavlink_message_t encoded_msg;
-
-    //uint8_t encoderStatus = Mavlink_airside_encoder(MESSAGE_ID_GPS_LANDING_SPOT, &encoded_msg, (const uint8_t*) &global_position);
-    uint8_t encoderStatus = Mavlink_airside_encoder(MESSAGE_ID_ERROR_CODE, &encoded_msg, (const uint8_t*) &uint8_cmd); // TODO werid ERROR
-    
+    //printf("space holder here\n");
+    uint8_t encoderStatus = Mavlink_airside_encoder(MESSAGE_ID_ERROR_CODE, &encoded_msg, (const uint8_t*) &uint8_cmd);
     //uint8_t encoderStatus = Mavlink_airside_encoder(MESSAGE_ID_GPS, &encoded_msg, (const uint8_t*) &landing_spot);
     //uint8_t encoderStatus = Mavlink_airside_encoder(MESSAGE_ID_EULER_ANGLE_CAM, &encoded_msg, (const uint8_t*) &angle_cmd);
 
@@ -424,22 +382,22 @@ int test__encode_then_decode(void)
         //printf("encoding failed");
         return 0;
     }
-
+    printf("put printf here doesn't affect message\n");
     //---------------------------------- decoding starts ---------------------------------- 
 
     mavlink_decoding_status_t decoderStatus = MAVLINK_DECODING_INCOMPLETE;
     //mavlink_attitude_t gimbal_command_decoded;
 
-    char decoded_message_buffer[100]; //256 is the max payload length
+    char decoded_message_buffer[50]; //256 is the max payload length
 
     // the following few lines imitates how a decoder is used when it gets one byte at a time from a serial port
     unsigned char* ptr_in_byte = (unsigned char *) &encoded_msg;
-
+    
     for( int i = 0; i < 50; i++) // 50 is just a random number larger than message length (for GPS message length is 39)
     {
         if (decoderStatus != MAVLINK_DECODING_OKAY)
         {
-            printf("copying byte: %d / %d   |   current byte : %hhx\n", i, 50, ptr_in_byte[i]); //TODO investigate why test failed if comment this
+            printf("copying byte: %d  |  current byte : %hhx\n", i, ptr_in_byte[i]);
             decoderStatus = Mavlink_airside_decoder(MAVLINK_COMM_0, ptr_in_byte[i], (uint8_t*) &decoded_message_buffer);
         }
     }
@@ -492,9 +450,16 @@ int test__encode_then_decode(void)
                 {
 
                     one_byte_uint_cmd_t cmd_decoded;
+
                     memcpy(&cmd_decoded, &decoded_message_buffer, sizeof(one_byte_uint_cmd_t));
 
-                    result = memcmp(&cmd_decoded, &uint8_cmd, sizeof(one_byte_uint_cmd_t) );
+                    result = memcmp(&cmd_decoded, &uint8_cmd, sizeof(one_byte_uint_cmd_t));
+                    /*
+                    void* check = malloc(sizeof(one_byte_uint_cmd_t));
+                    memcpy(check, &decoded_message_buffer, sizeof(one_byte_uint_cmd_t));
+                    result = memcmp(check, &uint8_cmd, sizeof(one_byte_uint_cmd_t));
+                    free(check);
+                    */
                 }
                 break;
 
