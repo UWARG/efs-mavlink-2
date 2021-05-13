@@ -19,16 +19,14 @@
 // The decoder and encoder only support GPS and gimbal control, other simpler commands will be taken
 // care of by the Xbee communication directly
 /**************************************************************************************************/
-#include <stdlib.h>
+
 #include "Mavlink2_lib/common/mavlink.h"
 #include "Airside_Functions.hpp"
 
-PIGO_Message_IDs_t decoded_message_type = MESSAGE_ID_NONE;
-
-
-mavlink_decoding_status_t Mavlink_airside_decoder(int channel, uint8_t incomingByte, uint8_t *telemetryData)
+mavlink_decoding_status_t Mavlink_airside_decoder(PIGO_Message_IDs_e* type, uint8_t incomingByte, uint8_t *telemetryData)
 {
-    decoded_message_type = MESSAGE_ID_NONE; //init
+    int channel = MAVLINK_COMM_0; //mavlink default one channel
+    PIGO_Message_IDs_e decoded_message_type = MESSAGE_ID_NONE;
     mavlink_decoding_status_t decoding_status = MAVLINK_DECODING_INCOMPLETE;
 
     mavlink_status_t status;
@@ -146,7 +144,7 @@ mavlink_decoding_status_t Mavlink_airside_decoder(int channel, uint8_t incomingB
 
                         else if (   warg_ID == MESSAGE_ID_BEGIN_LANDING ||
                                     warg_ID == MESSAGE_ID_BEGIN_TAKEOFF ||
-                                    warg_ID ==MESSAGE_ID_INITIALIZING_HOMEBASE)
+                                    warg_ID == MESSAGE_ID_INITIALIZING_HOMEBASE)
                         {
                             single_bool_cmd_t isLanded;
                             memset(&isLanded, 0x00, sizeof(single_bool_cmd_t));
@@ -159,7 +157,8 @@ mavlink_decoding_status_t Mavlink_airside_decoder(int channel, uint8_t incomingB
 
                         if (decoding_status == MAVLINK_DECODING_OKAY)
                         {
-                            decoded_message_type = (PIGO_Message_IDs_t) warg_ID;
+                            decoded_message_type = (PIGO_Message_IDs_e) warg_ID;
+                            *type = decoded_message_type;
                             return MAVLINK_DECODING_OKAY;
                         }
 
@@ -173,14 +172,7 @@ mavlink_decoding_status_t Mavlink_airside_decoder(int channel, uint8_t incomingB
     return MAVLINK_DECODING_INCOMPLETE;
 }
 
-
-PIGO_Message_IDs_t Mavlink_airside_decoder_get_message_type(void)
-{
-    return decoded_message_type;
-}
-
-
-mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_t msgID, mavlink_message_t *message, const uint8_t *struct_ptr) 
+mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_e msgID, mavlink_message_t *message, const uint8_t *struct_ptr) 
 {
     mavlink_encoding_status_t encoding_status = MAVLINK_ENCODING_INCOMPLETE;
 
@@ -260,7 +252,7 @@ mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_t msgID, mavl
     }
 
     // loading warg command ID before encoding
-    global_position.time_boot_ms = MESSAGE_ID_WAYPOINT_MODIFY_PATH_CMD;//msgID;
+    global_position.time_boot_ms = msgID;
     message_len = mavlink_msg_global_position_int_encode(system_id, component_id, &encoded_msg_original, &global_position);
 
     if (message_len == 0)
@@ -316,8 +308,6 @@ mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_t msgID, mavl
 
 int test__encode_then_decode(void)
 {
-    //printf("put printf here affect message, random bytes inserted\n");
-
    PIGO_GPS_LANDING_SPOT_t landing_spot = {
        1,
        2,
@@ -367,35 +357,30 @@ int test__encode_then_decode(void)
 
     if (encoderStatus == MAVLINK_ENCODING_FAIL)
     {
-        //printf("encoding failed");
         return 0;
     }
-    //printf("put printf here doesn't affect message\n");
+
     //---------------------------------- decoding starts ---------------------------------- 
 
     mavlink_decoding_status_t decoderStatus = MAVLINK_DECODING_INCOMPLETE;
-    //mavlink_attitude_t gimbal_command_decoded;
 
     char decoded_message_buffer[50]; //256 is the max payload length
 
     // the following few lines imitates how a decoder is used when it gets one byte at a time from a serial port
     unsigned char* ptr_in_byte = (unsigned char *) &encoded_msg;
-    
+    PIGO_Message_IDs_e message_type = MESSAGE_ID_NONE;
+
     for( int i = 0; i < 50; i++) // 50 is just a random number larger than message length (for GPS message length is 39)
     {
         if (decoderStatus != MAVLINK_DECODING_OKAY)
         {
             //printf("copying byte: %d  |  current byte : %hhx\n", i, ptr_in_byte[i]);
-            decoderStatus = Mavlink_airside_decoder(MAVLINK_COMM_0, ptr_in_byte[i], (uint8_t*) &decoded_message_buffer);
-            //printf("copying byte: %d  |  current byte : %hhx\n", i, ptr_in_byte[i]);
-            //printf("%d\n", decoderStatus);
+            decoderStatus = Mavlink_airside_decoder(&message_type, ptr_in_byte[i], (uint8_t*) &decoded_message_buffer);
         }
     }
 
     if (decoderStatus == MAVLINK_DECODING_OKAY)
     {
-        //printf("initial decoding okay\n");
-        PIGO_Message_IDs_t message_type = Mavlink_airside_decoder_get_message_type();
         int result = 1;
 
         switch (message_type) // those types need to match ground side decoder's type, currently use the airside only for the purpose of testing
@@ -444,12 +429,6 @@ int test__encode_then_decode(void)
                     memcpy(&cmd_decoded, &decoded_message_buffer, sizeof(one_byte_uint_cmd_t));
 
                     result = memcmp(&cmd_decoded, &uint8_cmd, sizeof(one_byte_uint_cmd_t));
-                    /*
-                    void* check = malloc(sizeof(one_byte_uint_cmd_t));
-                    memcpy(check, &decoded_message_buffer, sizeof(one_byte_uint_cmd_t));
-                    result = memcmp(check, &uint8_cmd, sizeof(one_byte_uint_cmd_t));
-                    free(check);
-                    */
                 }
                 break;
 
@@ -460,12 +439,12 @@ int test__encode_then_decode(void)
 
         if (result == 0)
         {
-            printf("test passed!\n");
+            //printf("test passed!\n");
             return 1;
         }
     }
     else{
-        printf("decoding failed\n");
+        //printf("decoding failed\n");
     }
     return 0;
 }
@@ -477,5 +456,3 @@ int main(void) // TODO: this main needs to be removed once integrated
 
     return 0;
 }
-
-

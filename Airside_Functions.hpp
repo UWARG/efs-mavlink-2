@@ -47,7 +47,7 @@ typedef enum {
     MESSAGE_ID_PATH_MODIFY_LD,
     MESSAGE_ID_WAYPOINTS,
     MESSAGE_ID_HOMEBASE,
-} PIGO_Message_IDs_t;
+} PIGO_Message_IDs_e;
 
 //airside encoder, Plane Out Ground In (POGI) Plane ----> Ground 
 typedef enum {
@@ -63,7 +63,7 @@ typedef enum {
     MESSAGE_ID_CURRENT_WAYPOINT_LD,
     MESSAGE_ID_CURRENT_WAYPOINT_INDEX,
     MESSAGE_ID_HOMEBASE_INITIALIZED,
-} POGI_Message_IDs_t;
+} POGI_Message_IDs_e;
 
 //-------------------------- Customized WARG Command Structs ---------------------------------------------------------------
 
@@ -154,7 +154,7 @@ typedef struct POGI_Timestamp_t {
     uint16_t Hdg = global_position.hdg; // This carries simple commands such as bool or uint8_t
 
  **/
-mavlink_decoding_status_t Mavlink_airside_decoder(int channel, uint8_t incomingByte, uint8_t *telemetryData);
+mavlink_decoding_status_t Mavlink_airside_decoder(PIGO_Message_IDs_e* type, uint8_t incomingByte, uint8_t *telemetryData);
 
 /**
  * @brief Encode an selected struct
@@ -175,16 +175,10 @@ mavlink_decoding_status_t Mavlink_airside_decoder(int channel, uint8_t incomingB
 
     uint8_t encoderStatus = Mavlink_airside_encoder(MESSAGE_ID_GPS, &encoded_msg, (const uint8_t*) &global_position);
  */
-mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_t id, mavlink_message_t *message, const uint8_t *struct_ptr);
-
+mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_e id, mavlink_message_t *message, const uint8_t *struct_ptr);
 
 int test__encode_then_decode(void);
 
-// functions created while attampting to create warg customed Mavlink messages
-uint16_t custom_mavlink_msg__begin_takeoff_command_encode(uint8_t system_id, uint8_t component_id, mavlink_message_t* message, const mavlink_custom_cmd_takeoff_t* struct_ptr);
-void custom_mavlink_msg__begin_takeoff_command_decode(const mavlink_message_t* message, mavlink_custom_cmd_takeoff_t* takeoff_command);
-uint16_t custom_fcn__calculate_crc(mavlink_message_t* msg, uint8_t crc_extra);
-
-PIGO_Message_IDs_t Mavlink_airside_decoder_get_message_type(void);
 
 #endif //AIRSIDE_FUNCTIONS_HPP
+
