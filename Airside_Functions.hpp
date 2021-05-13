@@ -23,7 +23,8 @@ typedef enum {
 typedef enum {
     MAVLINK_ENCODING_INCOMPLETE=0,
     MAVLINK_ENCODING_OKAY=1,
-    MAVLINK_ENCODING_FAIL=2,
+    MAVLINK_ENCODING_BAD_ID = 2,
+    MAVLINK_ENCODING_FAIL=3,
 } mavlink_encoding_status_t;
 
 //airside decoder, Plane In Ground Out (PIGO)

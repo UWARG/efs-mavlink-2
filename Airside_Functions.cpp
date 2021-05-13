@@ -52,6 +52,7 @@ mavlink_decoding_status_t Mavlink_airside_decoder(int channel, uint8_t incomingB
                 {
                     mavlink_global_position_int_t global_position;
                     memset(&global_position, 0x00, sizeof(mavlink_global_position_int_t));
+
                     mavlink_msg_global_position_int_decode(&decoded_msg, &global_position);
                     uint32_t warg_ID = global_position.time_boot_ms;
 
@@ -59,6 +60,7 @@ mavlink_decoding_status_t Mavlink_airside_decoder(int channel, uint8_t incomingB
                         {
                             PIGO_GPS_LANDING_SPOT_t landing_spot;
                             memset(&landing_spot, 0x00, sizeof(PIGO_GPS_LANDING_SPOT_t));
+
                             landing_spot.latitude = global_position.lat;
                             landing_spot.longitude = global_position.lon;
                             landing_spot.altitude = global_position.alt;
@@ -74,6 +76,7 @@ mavlink_decoding_status_t Mavlink_airside_decoder(int channel, uint8_t incomingB
                         {
                             PIGO_WAYPOINTS_t waypoints;
                             memset(&waypoints, 0x00, sizeof(PIGO_WAYPOINTS_t));
+
                             waypoints.latitude = global_position.lat;
                             waypoints.longitude = global_position.lon;
                             waypoints.altitude = global_position.alt;
@@ -94,6 +97,7 @@ mavlink_decoding_status_t Mavlink_airside_decoder(int channel, uint8_t incomingB
                         {
                             four_bytes_int_cmd_t command;
                             memset(&command, 0x00, sizeof(four_bytes_int_cmd_t));
+
                             command.cmd = global_position.lat;
 
                             memcpy((void*) telemetryData, (void*) &command, sizeof(four_bytes_int_cmd_t));
@@ -105,6 +109,7 @@ mavlink_decoding_status_t Mavlink_airside_decoder(int channel, uint8_t incomingB
                         {                 
                             PIGO_GIMBAL_t command;
                             memset(&command, 0x00, sizeof(PIGO_GIMBAL_t));
+
                             command.pitch = global_position.lat;
                             command.yaw = global_position.lon;
 
@@ -117,6 +122,7 @@ mavlink_decoding_status_t Mavlink_airside_decoder(int channel, uint8_t incomingB
                         {                 
                             PIGO_GROUND_COMMAND_t command;
                             memset(&command, 0x00, sizeof(PIGO_GROUND_COMMAND_t));
+
                             command.heading = global_position.lat;
                             command.latestDistance = global_position.lon;
 
@@ -131,6 +137,7 @@ mavlink_decoding_status_t Mavlink_airside_decoder(int channel, uint8_t incomingB
                         {
                             one_byte_uint_cmd_t command;
                             memset(&command, 0x00, sizeof(one_byte_uint_cmd_t));
+
                             command.cmd = global_position.hdg;
 
                             memcpy((void*) telemetryData, (void*) &command, sizeof(one_byte_uint_cmd_t));
@@ -143,6 +150,7 @@ mavlink_decoding_status_t Mavlink_airside_decoder(int channel, uint8_t incomingB
                         {
                             single_bool_cmd_t isLanded;
                             memset(&isLanded, 0x00, sizeof(single_bool_cmd_t));
+
                             isLanded.cmd = global_position.hdg;
 
                             memcpy((void*) telemetryData, (void*) &isLanded, sizeof(single_bool_cmd_t));
@@ -175,11 +183,15 @@ PIGO_Message_IDs_t Mavlink_airside_decoder_get_message_type(void)
 mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_t msgID, mavlink_message_t *message, const uint8_t *struct_ptr) 
 {
     mavlink_encoding_status_t encoding_status = MAVLINK_ENCODING_INCOMPLETE;
+
     uint8_t system_id = 1;
     uint8_t component_id = 1;
+
     mavlink_message_t encoded_msg_original;
     memset(&encoded_msg_original, 0, sizeof(mavlink_message_t));
+
     uint16_t message_len;
+
     mavlink_global_position_int_t global_position;
 
     switch(msgID)
@@ -188,11 +200,7 @@ mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_t msgID, mavl
         {
             POGI_Timestamp_t* timestamp_cmd = (POGI_Timestamp_t*) struct_ptr;
 
-            //mavlink_global_position_int_t global_position;
-            //global_position.time_boot_ms = MESSAGE_ID_TIMESTAMP;
             global_position.lat = timestamp_cmd ->timeStamp;
-
-            //message_len = mavlink_msg_global_position_int_encode(system_id, component_id, &encoded_msg_original, &global_position);
         } 
         break;
 
@@ -200,13 +208,9 @@ mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_t msgID, mavl
         {
             POGI_GPS_t* warg_GPS_cmd = (POGI_GPS_t*) struct_ptr;
 
-            //mavlink_global_position_int_t global_position;
-            //global_position.time_boot_ms = MESSAGE_ID_GPS; //TODO set this to the correct ID
             global_position.lat = warg_GPS_cmd ->latitude;
             global_position.lon = warg_GPS_cmd ->longitude;
             global_position.alt = warg_GPS_cmd ->altitude;
-
-            //message_len = mavlink_msg_global_position_int_encode(system_id, component_id, &encoded_msg_original, &global_position);
         } 
         break;
 
@@ -215,13 +219,9 @@ mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_t msgID, mavl
         {
             POGI_Euler_Angle_t* gimbal_cmd = (POGI_Euler_Angle_t*) struct_ptr;
 
-            //mavlink_global_position_int_t global_position;
-            //global_position.time_boot_ms = MESSAGE_ID_GIMBAL_CMD; //TODO set this to the correct ID
             global_position.lat = gimbal_cmd ->roll;
             global_position.lon = gimbal_cmd ->pitch;
             global_position.alt = gimbal_cmd ->yaw;
-
-            //message_len = mavlink_msg_global_position_int_encode(system_id, component_id, &encoded_msg_original, &global_position);
         }
         break;
 
@@ -230,11 +230,7 @@ mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_t msgID, mavl
         {
             single_bool_cmd_t* warg_cmd = (single_bool_cmd_t*) struct_ptr;
 
-            //mavlink_global_position_int_t global_position;
-            //global_position.time_boot_ms = MESSAGE_ID_BEGIN_LANDING; //TODO set this to the correct ID
             global_position.hdg = warg_cmd ->cmd;
-
-            //message_len = mavlink_msg_global_position_int_encode(system_id, component_id, &encoded_msg_original, &global_position);
         }
         break;
 
@@ -244,11 +240,7 @@ mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_t msgID, mavl
         {
             four_bytes_int_cmd_t* numWaypoint_cmd = (four_bytes_int_cmd_t*) struct_ptr;
 
-            //mavlink_global_position_int_t global_position;
-            //global_position.time_boot_ms = 1; //TODO  use appropriate ID here
             global_position.lat = numWaypoint_cmd ->cmd;
-
-            //message_len = mavlink_msg_global_position_int_encode(system_id, component_id, &encoded_msg_original, &global_position);
         } 
         break;
 
@@ -258,19 +250,17 @@ mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_t msgID, mavl
         {
             one_byte_uint_cmd_t* warg_cmd = (one_byte_uint_cmd_t*) struct_ptr;
 
-            //mavlink_global_position_int_t global_position;
-            //global_position.time_boot_ms = MESSAGE_ID_HOLDING_TURN_DIRECTION; //TODO  use appropriate ID here
             global_position.hdg = warg_cmd ->cmd;
-
-            //message_len = mavlink_msg_global_position_int_encode(system_id, component_id, &encoded_msg_original, &global_position);
         }
         break;
 
         default:
-            encoding_status = MAVLINK_ENCODING_FAIL;
+            return MAVLINK_ENCODING_BAD_ID;
             break;
     }
-    global_position.time_boot_ms = MESSAGE_ID_HOLDING_TURN_DIRECTION;
+
+    // loading warg command ID before encoding
+    global_position.time_boot_ms = MESSAGE_ID_WAYPOINT_MODIFY_PATH_CMD;//msgID;
     message_len = mavlink_msg_global_position_int_encode(system_id, component_id, &encoded_msg_original, &global_position);
 
     if (message_len == 0)
@@ -278,8 +268,8 @@ mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_t msgID, mavl
         return MAVLINK_ENCODING_FAIL;
     }
 
-    // the following loop is supposed to fix an inconsistency the original mavlink encoder, where the first byte is always shifted.
-    // this code lets the encoder to send out a message (byte array) that starts exactly with the starting byte
+    // the following loop is supposed to move the two checksum bytes to the last so that the encoder 
+    // can send out a message (byte array) that starts exactly with the starting byte
     unsigned char* ptr_in_byte = (unsigned char *) &encoded_msg_original;
     char message_buffer[message_len];
 
@@ -311,7 +301,6 @@ mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_t msgID, mavl
             message_buffer[message_len-2+i] = ptr_in_byte[start_index-2+i]; // load the last 2 checksum bytes
             //printf("copying byte: %d / %d   |   current byte : %hhx\n", message_len-2+i, message_len, message_buffer[message_len-2+i]);
         }
-        //message = (mavlink_message_t*) malloc(message_len);
         memcpy(message, message_buffer, message_len);
 
         return MAVLINK_ENCODING_OKAY;
