@@ -18,10 +18,10 @@ typedef enum {
     MAVLINK_DECODING_INCOMPLETE=0,
     MAVLINK_DECODING_OKAY=1,
     MAVLINK_DECODING_FAIL=2,
-    MAVLINK_DECODING_BAD_PARSING=3,
 } mavlink_decoding_status_t;
 
 typedef enum {
+    MAVLINK_ENCODING_INCOMPLETE=0,
     MAVLINK_ENCODING_OKAY=1,
     MAVLINK_ENCODING_FAIL=2,
 } mavlink_encoding_status_t;
@@ -140,6 +140,18 @@ typedef struct POGI_Timestamp_t {
         }
     }
  * 
+ * 
+    // the built in GPS struct and it's associated encoder and decoder is used for customized warg commands:
+    uint32_t warg_ID = global_position.time_boot_ms; // This is used as the WARG message ID
+    int32_t latitude = global_position.lat; //< [degE7] Latitude, expressed
+    int32_t longitude = global_position.lon; //< [degE7] Longitude, expressed
+    int32_t altitude = global_position.alt; //< [mm] Altitude (MSL). Note that virtually all GPS modules provide both WGS84 and MSL.
+    int32_t relative_altitude = global_position.relative_alt; //< [mm] Altitude above ground
+    int16_t Vx = global_position.vx; //< [cm/s] Ground X Speed (Latitude, positive north)
+    int16_t Vy = global_position.vy; //< [cm/s] Ground Y Speed (Longitude, positive east)
+    int16_t Vz = global_position.vz; //< [cm/s] Ground Z Speed (Altitude, positive down)
+    uint16_t Hdg = global_position.hdg; // This carries simple commands such as bool or uint8_t
+
  **/
 mavlink_decoding_status_t Mavlink_airside_decoder(int channel, uint8_t incomingByte, uint8_t *telemetryData);
 
