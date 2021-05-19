@@ -259,7 +259,7 @@ mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_e msgID, mavl
     }
 
     // loading warg command ID before encoding
-    global_position.time_boot_ms = MESSAGE_ID_BEGIN_LANDING; //use MESSAGE_ID_BEGIN_LANDING for simple testing within airside, otherwise use msgID
+    global_position.time_boot_ms = msgID; //use MESSAGE_ID_BEGIN_LANDING for simple testing within airside, otherwise use msgID
     message_len = mavlink_msg_global_position_int_encode(system_id, component_id, &encoded_msg_original, &global_position);
 
     if (message_len == 0)
@@ -465,3 +465,4 @@ int main(void) // TODO: this main needs to be removed once integrated
     return 0;
 }
 */
+
