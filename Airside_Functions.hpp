@@ -14,22 +14,22 @@
 
 #include "Mavlink2_lib/common/mavlink.h"
 
-typedef enum {
+enum mavlink_decoding_status_t{
     MAVLINK_DECODING_INCOMPLETE=0,
     MAVLINK_DECODING_OKAY=1,
     MAVLINK_DECODING_FAIL=2,
-} mavlink_decoding_status_t;
+};
 
-typedef enum {
+enum mavlink_encoding_status_t{
     MAVLINK_ENCODING_INCOMPLETE=0,
     MAVLINK_ENCODING_OKAY=1,
     MAVLINK_ENCODING_BAD_ID = 2,
     MAVLINK_ENCODING_FAIL=3,
-} mavlink_encoding_status_t;
+};
 
 //airside decoder, Plane In Ground Out (PIGO)
-typedef enum {
-    MESSAGE_ID_NONE,
+enum PIGO_Message_IDs_e{
+    MESSAGE_ID_NONE = 0,
     MESSAGE_ID_GPS_LANDING_SPOT,
     MESSAGE_ID_GROUND_CMD,
     MESSAGE_ID_GIMBAL_CMD,
@@ -47,11 +47,11 @@ typedef enum {
     MESSAGE_ID_PATH_MODIFY_LD,
     MESSAGE_ID_WAYPOINTS,
     MESSAGE_ID_HOMEBASE,
-} PIGO_Message_IDs_e;
+};
 
 //airside encoder, Plane Out Ground In (POGI) Plane ----> Ground 
-typedef enum {
-    MESSAGE_ID_TIMESTAMP,
+enum POGI_Message_IDs_e{
+    MESSAGE_ID_TIMESTAMP = 0,
     MESSAGE_ID_GPS,
     MESSAGE_ID_ERROR_CODE,
     MESSAGE_ID_AIR_SPEED,
@@ -63,64 +63,63 @@ typedef enum {
     MESSAGE_ID_CURRENT_WAYPOINT_LD,
     MESSAGE_ID_CURRENT_WAYPOINT_INDEX,
     MESSAGE_ID_HOMEBASE_INITIALIZED,
-} POGI_Message_IDs_e;
+};
 
 //-------------------------- Customized WARG Command Structs ---------------------------------------------------------------
 
-typedef struct PIGO_GPS_LANDING_SPOT_t {
+struct PIGO_GPS_LANDING_SPOT_t {
     int32_t latitude;
     int32_t longitude;
     int32_t altitude;
     int32_t landingDirection;
-} PIGO_GPS_LANDING_SPOT_t;
+};
 
-typedef struct PIGO_WAYPOINTS_t { // same as homebase GPS struct
+struct PIGO_WAYPOINTS_t { // same as homebase GPS struct
     int32_t latitude;
     int32_t longitude;
     int32_t altitude;
     int32_t turnRadius;
     uint8_t waypointType;
-} PIGO_LOCATION_INFO_t;
+};
 
-
-typedef struct PIGO_GIMBAL_t { // convert to float
+struct PIGO_GIMBAL_t { // convert to float
     int32_t pitch;
     int32_t yaw;
-}PIGO_GIMBAL_t;
+};
 
-typedef struct PIGO_GROUND_COMMAND_t { //convert to float
+struct PIGO_GROUND_COMMAND_t { //convert to float
     int32_t heading;
     int32_t latestDistance;
-} PIGO_GROUND_COMMAND_t;
+};
 
 
-typedef struct single_bool_cmd_t {
+struct single_bool_cmd_t {
     bool cmd;
-} single_bool_cmd_t;
+};
 
-typedef struct one_byte_uint_cmd_t {
+struct one_byte_uint_cmd_t {
     uint8_t cmd;
-} one_byte_uint_cmd_t;
+};
 
-typedef struct four_bytes_int_cmd_t {
+struct four_bytes_int_cmd_t {
     int32_t cmd;
-} four_bytes_int_cmd_t;
+};
 
-typedef struct POGI_Euler_Angle_t { // convert to float
+struct POGI_Euler_Angle_t { // convert to float
     int32_t yaw;
     int32_t pitch;
     int32_t roll;
-} POGI_Euler_Angle_t;
+};
 
-typedef struct POGI_GPS_t {
+struct POGI_GPS_t {
     int32_t latitude;
     int32_t longitude;
     int32_t altitude;
-} POGI_GPS_t;
+};
 
-typedef struct POGI_Timestamp_t {
+struct POGI_Timestamp_t {
     uint32_t timeStamp;
-} POGI_Timestamp_t;
+};
 //-------------------------- Prototypes ---------------------------------------------------------------
 
 /**

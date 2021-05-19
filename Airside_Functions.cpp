@@ -10,9 +10,9 @@
 // mkdir build, cd build
 // cmake ..
 // make
-// execute generated target
+// FUNCTIONS (executing the generated target, which is FUNCTIONS in this case)
 
-
+// The encoder and decoders are implemented based on Mavlink2 (not Mavlink1)
 // refer to this page for the stucture of mavlink messages 
 // https://mavlink.io/en/guide/serialization.html
 
@@ -33,8 +33,10 @@ mavlink_decoding_status_t Mavlink_airside_decoder(PIGO_Message_IDs_e* type, uint
     memset(&status, 0x00, sizeof(mavlink_status_t));
 
     mavlink_message_t decoded_msg;
-    memset(&decoded_msg, 0, sizeof(mavlink_message_t));
+    memset(&decoded_msg, 0x00, sizeof(mavlink_message_t));
 
+    // this function parses the incoming bytes, and the decoded_msg will get filled when the full message is received
+    // more details about the parser function: http://docs.ros.org/en/indigo/api/mavlink/html/include__v2_80_2mavlink__helpers_8h.html#ad91e8323cefc65965574c09e72365d7d
     uint8_t message_received = mavlink_parse_char(channel, incomingByte, &decoded_msg, &status);
 
     if (message_received)
@@ -54,6 +56,8 @@ mavlink_decoding_status_t Mavlink_airside_decoder(PIGO_Message_IDs_e* type, uint
                     mavlink_msg_global_position_int_decode(&decoded_msg, &global_position);
                     uint32_t warg_ID = global_position.time_boot_ms;
 
+                        // we are borrowing the GPS struct to transfer our own commands, the global_position.time_boot_ms is used to store our message ID
+                        // the follow code first seperates the messages into different catagories based on their IDs, then completes the decoding process
                         if (warg_ID == MESSAGE_ID_GPS_LANDING_SPOT)
                         {
                             PIGO_GPS_LANDING_SPOT_t landing_spot;
@@ -176,23 +180,27 @@ mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_e msgID, mavl
 {
     mavlink_encoding_status_t encoding_status = MAVLINK_ENCODING_INCOMPLETE;
 
-    uint8_t system_id = 1;
-    uint8_t component_id = 1;
+    uint8_t system_id = 1;                  // system_ID is default to 1 because we only need to control one drone
+    uint8_t component_id = MAVLINK_COMM_0;  // default channel
 
     mavlink_message_t encoded_msg_original;
-    memset(&encoded_msg_original, 0, sizeof(mavlink_message_t));
+    memset(&encoded_msg_original, 0x00, sizeof(mavlink_message_t));
 
     uint16_t message_len;
 
     mavlink_global_position_int_t global_position;
+    memset(&global_position, 0x00, sizeof(mavlink_global_position_int_t));
 
+    // we are borrowing the GPS struct to transfer our own commands, the global_position.time_boot_ms is used to store our message ID
+    // the follow code seperates the commands into different encoding catagories based on their message types and number of commands
+    // an command ID is assiged to the time_boot_ms for each case before the struct gets encoded
     switch(msgID)
     {
         case MESSAGE_ID_TIMESTAMP:
         {
             POGI_Timestamp_t* timestamp_cmd = (POGI_Timestamp_t*) struct_ptr;
 
-            global_position.lat = timestamp_cmd ->timeStamp;
+            global_position.lat = timestamp_cmd->timeStamp;
         } 
         break;
 
@@ -200,9 +208,9 @@ mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_e msgID, mavl
         {
             POGI_GPS_t* warg_GPS_cmd = (POGI_GPS_t*) struct_ptr;
 
-            global_position.lat = warg_GPS_cmd ->latitude;
-            global_position.lon = warg_GPS_cmd ->longitude;
-            global_position.alt = warg_GPS_cmd ->altitude;
+            global_position.lat = warg_GPS_cmd->latitude;
+            global_position.lon = warg_GPS_cmd->longitude;
+            global_position.alt = warg_GPS_cmd->altitude;
         } 
         break;
 
@@ -211,9 +219,9 @@ mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_e msgID, mavl
         {
             POGI_Euler_Angle_t* gimbal_cmd = (POGI_Euler_Angle_t*) struct_ptr;
 
-            global_position.lat = gimbal_cmd ->roll;
-            global_position.lon = gimbal_cmd ->pitch;
-            global_position.alt = gimbal_cmd ->yaw;
+            global_position.lat = gimbal_cmd->roll;
+            global_position.lon = gimbal_cmd->pitch;
+            global_position.alt = gimbal_cmd->yaw;
         }
         break;
 
@@ -222,7 +230,7 @@ mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_e msgID, mavl
         {
             single_bool_cmd_t* warg_cmd = (single_bool_cmd_t*) struct_ptr;
 
-            global_position.hdg = warg_cmd ->cmd;
+            global_position.hdg = warg_cmd->cmd;
         }
         break;
 
@@ -232,7 +240,7 @@ mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_e msgID, mavl
         {
             four_bytes_int_cmd_t* numWaypoint_cmd = (four_bytes_int_cmd_t*) struct_ptr;
 
-            global_position.lat = numWaypoint_cmd ->cmd;
+            global_position.lat = numWaypoint_cmd->cmd;
         } 
         break;
 
@@ -242,17 +250,16 @@ mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_e msgID, mavl
         {
             one_byte_uint_cmd_t* warg_cmd = (one_byte_uint_cmd_t*) struct_ptr;
 
-            global_position.hdg = warg_cmd ->cmd;
+            global_position.hdg = warg_cmd->cmd;
         }
         break;
 
         default:
             return MAVLINK_ENCODING_BAD_ID;
-            break;
     }
 
     // loading warg command ID before encoding
-    global_position.time_boot_ms = msgID;
+    global_position.time_boot_ms = MESSAGE_ID_BEGIN_LANDING; //use MESSAGE_ID_BEGIN_LANDING for simple testing within airside, otherwise use msgID
     message_len = mavlink_msg_global_position_int_encode(system_id, component_id, &encoded_msg_original, &global_position);
 
     if (message_len == 0)
@@ -263,9 +270,10 @@ mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_e msgID, mavl
     // the following loop is supposed to move the two checksum bytes to the last so that the encoder 
     // can send out a message (byte array) that starts exactly with the starting byte
     unsigned char* ptr_in_byte = (unsigned char *) &encoded_msg_original;
-    char message_buffer[message_len];
+    char message_buffer[39]; //39 is the max message length for GPS which gives 18 bytes for payload length
 
     uint8_t start_index = 0;
+    // finding the location of the starting byte
     for( int i = 0; i < message_len; i++)
     {
 
@@ -336,7 +344,7 @@ int test__encode_then_decode(void)
         2, //pitch
         3, //roll
     };
-    uint16_t inte = 8;
+
     one_byte_uint_cmd_t uint8_cmd = 
     {
         8,
@@ -349,7 +357,7 @@ int test__encode_then_decode(void)
 
 
     mavlink_message_t encoded_msg;
-    memset(&encoded_msg, 0, sizeof(mavlink_message_t));
+    memset(&encoded_msg, 0x00, sizeof(mavlink_message_t));
     //printf("space holder here\n");
     uint8_t encoderStatus = Mavlink_airside_encoder(MESSAGE_ID_ERROR_CODE, &encoded_msg, (const uint8_t*) &uint8_cmd);
     //uint8_t encoderStatus = Mavlink_airside_encoder(MESSAGE_ID_GPS, &encoded_msg, (const uint8_t*) &landing_spot);
@@ -449,10 +457,11 @@ int test__encode_then_decode(void)
     return 0;
 }
 
-
+/*
 int main(void) // TODO: this main needs to be removed once integrated
 {
     test__encode_then_decode();
 
     return 0;
 }
+*/
