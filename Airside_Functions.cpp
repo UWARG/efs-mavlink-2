@@ -16,8 +16,6 @@
 // refer to this page for the stucture of mavlink messages 
 // https://mavlink.io/en/guide/serialization.html
 
-// The decoder and encoder only support GPS and gimbal control, other simpler commands will be taken
-// care of by the Xbee communication directly
 /**************************************************************************************************/
 
 #include "Mavlink2_lib/common/mavlink.h"

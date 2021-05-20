@@ -5,8 +5,6 @@
 // refer to this page for the stucture of mavlink messages 
 // https://mavlink.io/en/guide/serialization.html
 
-// The decoder and encoder only support GPS and gimbal control, other simpler commands will be taken
-// care of by the Xbee communication directly
 /**************************************************************************************************/
 
 #ifndef AIRSIDE_FUNCTIONS_HPP
@@ -123,7 +121,7 @@ struct POGI_Timestamp_t {
 //-------------------------- Prototypes ---------------------------------------------------------------
 
 /**
- * This decoder is consists of two parts, parser and decoder.
+ * This decoder consists of two parts, parser and decoder.
  * The parser handles mavlink messages one byte at a time. 
  * Once the complete packet could be successfully decoded, the decoder would translate the message into telemetry data.
  * 
@@ -141,7 +139,7 @@ struct POGI_Timestamp_t {
     }
  * 
  * 
-    // the built in GPS struct and it's associated encoder and decoder is used for customized warg commands:
+    // the built in GPS struct and its associated encoder and decoder is used for customized warg commands:
     uint32_t warg_ID = global_position.time_boot_ms; // This is used as the WARG message ID
     int32_t latitude = global_position.lat; //< [degE7] Latitude, expressed
     int32_t longitude = global_position.lon; //< [degE7] Longitude, expressed
@@ -156,10 +154,10 @@ struct POGI_Timestamp_t {
 mavlink_decoding_status_t Mavlink_airside_decoder(PIGO_Message_IDs_e* type, uint8_t incomingByte, uint8_t *telemetryData);
 
 /**
- * @brief Encode an selected struct
+ * @brief Encode a selected struct
  *
  * @param type The type of telemetry data e.g. GPS or takeoff or landing...
- * @param message The MAVLink message to compress the data into, this is guarenteed to be a full message starts from byte 0xfd
+ * @param message The MAVLink message to compress the data into, this is guaranteed to be a full message starts from byte 0xfd
  * @param struct_ptr C-struct to read the message contents from
  * 
  * @return the status of encoding
