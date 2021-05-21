@@ -54,9 +54,11 @@ mavlink_decoding_status_t Mavlink_airside_decoder(PIGO_Message_IDs_e* type, uint
                     mavlink_msg_global_position_int_decode(&decoded_msg, &global_position);
                     uint32_t warg_ID = global_position.time_boot_ms;
 
-                        // we are borrowing the GPS struct to transfer our own commands, the global_position.time_boot_ms is used to store our message ID
-                        // the follow code first seperates the messages into different catagories based on their IDs, then completes the decoding process
-                        if (warg_ID == MESSAGE_ID_GPS_LANDING_SPOT)
+                    // we are borrowing the GPS struct to transfer our own commands, the global_position.time_boot_ms is used to store our message ID
+                    // the follow code first seperates the messages into different catagories based on their IDs, then completes the decoding process
+                    switch(warg_ID)
+                    {
+                        case MESSAGE_ID_GPS_LANDING_SPOT:
                         {
                             PIGO_GPS_LANDING_SPOT_t landing_spot;
                             memset(&landing_spot, 0x00, sizeof(PIGO_GPS_LANDING_SPOT_t));
@@ -68,11 +70,14 @@ mavlink_decoding_status_t Mavlink_airside_decoder(PIGO_Message_IDs_e* type, uint
 
                             memcpy((void*) telemetryData, (void*) &landing_spot, sizeof(PIGO_GPS_LANDING_SPOT_t));
 
-                            decoding_status = MAVLINK_DECODING_OKAY;
+                            decoded_message_type = (PIGO_Message_IDs_e) warg_ID;
+                            *type = decoded_message_type;
+
+                            return MAVLINK_DECODING_OKAY;          
                         }
 
-                        else if (   warg_ID == MESSAGE_ID_WAYPOINTS ||
-                                    warg_ID == MESSAGE_ID_HOMEBASE)
+                        case MESSAGE_ID_WAYPOINTS:
+                        case MESSAGE_ID_HOMEBASE:
                         {
                             PIGO_WAYPOINTS_t waypoints;
                             memset(&waypoints, 0x00, sizeof(PIGO_WAYPOINTS_t));
@@ -85,15 +90,18 @@ mavlink_decoding_status_t Mavlink_airside_decoder(PIGO_Message_IDs_e* type, uint
 
                             memcpy((void*) telemetryData, (void*) &waypoints, sizeof(PIGO_WAYPOINTS_t));
 
-                            decoding_status = MAVLINK_DECODING_OKAY;
+                            decoded_message_type = (PIGO_Message_IDs_e) warg_ID;
+                            *type = decoded_message_type;
+
+                            return MAVLINK_DECODING_OKAY;
                         }
 
-                        else if (   warg_ID == MESSAGE_ID_NUM_WAYPOINTS ||
-                                    warg_ID == MESSAGE_ID_HOLDING_ALTITUDE ||
-                                    warg_ID == MESSAGE_ID_HOLDING_TURN_RADIUS ||
-                                    warg_ID == MESSAGE_ID_PATH_MODIFY_NEXT_LD ||
-                                    warg_ID == MESSAGE_ID_PATH_MODIFY_PREV_LD ||
-                                    warg_ID == MESSAGE_ID_PATH_MODIFY_LD)
+                        case MESSAGE_ID_NUM_WAYPOINTS:
+                        case MESSAGE_ID_HOLDING_ALTITUDE:
+                        case MESSAGE_ID_HOLDING_TURN_RADIUS:
+                        case MESSAGE_ID_PATH_MODIFY_NEXT_LD:
+                        case MESSAGE_ID_PATH_MODIFY_PREV_LD:
+                        case MESSAGE_ID_PATH_MODIFY_LD:
                         {
                             four_bytes_int_cmd_t command;
                             memset(&command, 0x00, sizeof(four_bytes_int_cmd_t));
@@ -102,11 +110,14 @@ mavlink_decoding_status_t Mavlink_airside_decoder(PIGO_Message_IDs_e* type, uint
 
                             memcpy((void*) telemetryData, (void*) &command, sizeof(four_bytes_int_cmd_t));
 
-                            decoding_status = MAVLINK_DECODING_OKAY;
+                            decoded_message_type = (PIGO_Message_IDs_e) warg_ID;
+                            *type = decoded_message_type;
+
+                            return MAVLINK_DECODING_OKAY;
                         }
 
-                        else if (warg_ID == MESSAGE_ID_GIMBAL_CMD)
-                        {                 
+                        case MESSAGE_ID_GIMBAL_CMD:
+                        {
                             PIGO_GIMBAL_t command;
                             memset(&command, 0x00, sizeof(PIGO_GIMBAL_t));
 
@@ -115,11 +126,14 @@ mavlink_decoding_status_t Mavlink_airside_decoder(PIGO_Message_IDs_e* type, uint
 
                             memcpy((void*) telemetryData, (void*) &command, sizeof(PIGO_GIMBAL_t));
 
-                            decoding_status = MAVLINK_DECODING_OKAY;                              
+                            decoded_message_type = (PIGO_Message_IDs_e) warg_ID;
+                            *type = decoded_message_type;
+
+                            return MAVLINK_DECODING_OKAY; 
                         }
 
-                        else if (warg_ID == MESSAGE_ID_GROUND_CMD)
-                        {                 
+                        case MESSAGE_ID_GROUND_CMD:
+                        {
                             PIGO_GROUND_COMMAND_t command;
                             memset(&command, 0x00, sizeof(PIGO_GROUND_COMMAND_t));
 
@@ -128,12 +142,15 @@ mavlink_decoding_status_t Mavlink_airside_decoder(PIGO_Message_IDs_e* type, uint
 
                             memcpy((void*) telemetryData, (void*) &command, sizeof(PIGO_GROUND_COMMAND_t));
 
-                            decoding_status = MAVLINK_DECODING_OKAY;                               
+                            decoded_message_type = (PIGO_Message_IDs_e) warg_ID;
+                            *type = decoded_message_type;
+
+                            return MAVLINK_DECODING_OKAY;                  
                         }
 
-                        else if (   warg_ID == MESSAGE_ID_WAYPOINT_MODIFY_PATH_CMD ||
-                                    warg_ID == MESSAGE_ID_WAYPOINT_NEXT_DIRECTIONS_CMD ||
-                                    warg_ID == MESSAGE_ID_HOLDING_TURN_DIRECTION)
+                        case MESSAGE_ID_WAYPOINT_MODIFY_PATH_CMD:
+                        case MESSAGE_ID_WAYPOINT_NEXT_DIRECTIONS_CMD:
+                        case MESSAGE_ID_HOLDING_TURN_DIRECTION:
                         {
                             one_byte_uint_cmd_t command;
                             memset(&command, 0x00, sizeof(one_byte_uint_cmd_t));
@@ -141,12 +158,16 @@ mavlink_decoding_status_t Mavlink_airside_decoder(PIGO_Message_IDs_e* type, uint
                             command.cmd = global_position.hdg;
 
                             memcpy((void*) telemetryData, (void*) &command, sizeof(one_byte_uint_cmd_t));
-                            decoding_status = MAVLINK_DECODING_OKAY;
+
+                            decoded_message_type = (PIGO_Message_IDs_e) warg_ID;
+                            *type = decoded_message_type;
+
+                            return MAVLINK_DECODING_OKAY;
                         }
 
-                        else if (   warg_ID == MESSAGE_ID_BEGIN_LANDING ||
-                                    warg_ID == MESSAGE_ID_BEGIN_TAKEOFF ||
-                                    warg_ID == MESSAGE_ID_INITIALIZING_HOMEBASE)
+                        case MESSAGE_ID_BEGIN_LANDING:
+                        case MESSAGE_ID_BEGIN_TAKEOFF:
+                        case MESSAGE_ID_INITIALIZING_HOMEBASE:
                         {
                             single_bool_cmd_t isLanded;
                             memset(&isLanded, 0x00, sizeof(single_bool_cmd_t));
@@ -154,22 +175,22 @@ mavlink_decoding_status_t Mavlink_airside_decoder(PIGO_Message_IDs_e* type, uint
                             isLanded.cmd = global_position.hdg;
 
                             memcpy((void*) telemetryData, (void*) &isLanded, sizeof(single_bool_cmd_t));
-                            decoding_status = MAVLINK_DECODING_OKAY;
-                        }
 
-                        if (decoding_status == MAVLINK_DECODING_OKAY)
-                        {
                             decoded_message_type = (PIGO_Message_IDs_e) warg_ID;
                             *type = decoded_message_type;
-                            return MAVLINK_DECODING_OKAY;
+
+                            return MAVLINK_DECODING_OKAY;                       
                         }
 
-                        return MAVLINK_DECODING_FAIL;
+                        default:
+                            return MAVLINK_DECODING_FAIL;
+                    }// end of inner switch
                 }
+
             default:
-                break;
-        }// end of switch
-    }// if message receieved
+                return MAVLINK_DECODING_FAIL;
+        }// end of outter switch
+    }// if message received
 
     return MAVLINK_DECODING_INCOMPLETE;
 }
