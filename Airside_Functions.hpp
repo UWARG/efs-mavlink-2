@@ -2,7 +2,7 @@
 // Author: Jingting Liu
 // April 9th, 2021
 
-// refer to this page for the stucture of mavlink messages 
+// refer to this page for the stucture of mavlink messages
 // https://mavlink.io/en/guide/serialization.html
 
 /**************************************************************************************************/
@@ -12,21 +12,24 @@
 
 #include "Mavlink2_lib/common/mavlink.h"
 
-enum mavlink_decoding_status_t{
-    MAVLINK_DECODING_INCOMPLETE=0,
-    MAVLINK_DECODING_OKAY=1,
-    MAVLINK_DECODING_FAIL=2,
+enum mavlink_decoding_status_t
+{
+    MAVLINK_DECODING_INCOMPLETE = 0,
+    MAVLINK_DECODING_OKAY,
+    MAVLINK_DECODING_FAIL,
 };
 
-enum mavlink_encoding_status_t{
-    MAVLINK_ENCODING_INCOMPLETE=0,
-    MAVLINK_ENCODING_OKAY=1,
-    MAVLINK_ENCODING_BAD_ID = 2,
-    MAVLINK_ENCODING_FAIL=3,
+enum mavlink_encoding_status_t
+{
+    MAVLINK_ENCODING_INCOMPLETE = 0,
+    MAVLINK_ENCODING_OKAY,
+    MAVLINK_ENCODING_BAD_ID,
+    MAVLINK_ENCODING_FAIL
 };
 
 //airside decoder, Plane In Ground Out (PIGO)
-enum PIGO_Message_IDs_e{
+enum PIGO_Message_IDs_e
+{
     MESSAGE_ID_NONE = 0,
     MESSAGE_ID_GPS_LANDING_SPOT,
     MESSAGE_ID_GROUND_CMD,
@@ -47,8 +50,9 @@ enum PIGO_Message_IDs_e{
     MESSAGE_ID_HOMEBASE,
 };
 
-//airside encoder, Plane Out Ground In (POGI) Plane ----> Ground 
-enum POGI_Message_IDs_e{
+//airside encoder, Plane Out Ground In (POGI) Plane ----> Ground
+enum POGI_Message_IDs_e
+{
     MESSAGE_ID_TIMESTAMP = 0,
     MESSAGE_ID_GPS,
     MESSAGE_ID_ERROR_CODE,
@@ -65,14 +69,16 @@ enum POGI_Message_IDs_e{
 
 //-------------------------- Customized WARG Command Structs ---------------------------------------------------------------
 
-struct PIGO_GPS_LANDING_SPOT_t {
+struct PIGO_GPS_LANDING_SPOT_t
+{
     int32_t latitude;
     int32_t longitude;
     int32_t altitude;
     int32_t landingDirection;
 };
 
-struct PIGO_WAYPOINTS_t { // same as homebase GPS struct
+struct PIGO_WAYPOINTS_t
+{ // same as homebase GPS struct
     int32_t latitude;
     int32_t longitude;
     int32_t altitude;
@@ -80,42 +86,49 @@ struct PIGO_WAYPOINTS_t { // same as homebase GPS struct
     uint8_t waypointType;
 };
 
-struct PIGO_GIMBAL_t { // convert to float
+struct PIGO_GIMBAL_t
+{ // convert to float
     int32_t pitch;
     int32_t yaw;
 };
 
-struct PIGO_GROUND_COMMAND_t { //convert to float
+struct PIGO_GROUND_COMMAND_t
+{ //convert to float
     int32_t heading;
     int32_t latestDistance;
 };
 
-
-struct single_bool_cmd_t {
+struct single_bool_cmd_t
+{
     bool cmd;
 };
 
-struct one_byte_uint_cmd_t {
+struct one_byte_uint_cmd_t
+{
     uint8_t cmd;
 };
 
-struct four_bytes_int_cmd_t {
+struct four_bytes_int_cmd_t
+{
     int32_t cmd;
 };
 
-struct POGI_Euler_Angle_t { // convert to float
+struct POGI_Euler_Angle_t
+{ // convert to float
     int32_t yaw;
     int32_t pitch;
     int32_t roll;
 };
 
-struct POGI_GPS_t {
+struct POGI_GPS_t
+{
     int32_t latitude;
     int32_t longitude;
     int32_t altitude;
 };
 
-struct POGI_Timestamp_t {
+struct POGI_Timestamp_t
+{
     uint32_t timeStamp;
 };
 //-------------------------- Prototypes ---------------------------------------------------------------
@@ -151,7 +164,7 @@ struct POGI_Timestamp_t {
     uint16_t Hdg = global_position.hdg; // This carries simple commands such as bool or uint8_t
 
  **/
-mavlink_decoding_status_t Mavlink_airside_decoder(PIGO_Message_IDs_e* type, uint8_t incomingByte, uint8_t *telemetryData);
+mavlink_decoding_status_t Mavlink_airside_decoder(PIGO_Message_IDs_e *type, uint8_t incomingByte, uint8_t *telemetryData);
 
 /**
  * @brief Encode a selected struct
@@ -174,8 +187,6 @@ mavlink_decoding_status_t Mavlink_airside_decoder(PIGO_Message_IDs_e* type, uint
  */
 mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_e id, mavlink_message_t *message, const uint8_t *struct_ptr);
 
-int test__encode_then_decode(void);
-
+// int test__encode_then_decode(void);
 
 #endif //AIRSIDE_FUNCTIONS_HPP
-
