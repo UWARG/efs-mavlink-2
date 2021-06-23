@@ -99,9 +99,9 @@ mavlink_decoding_status_t Mavlink_airside_decoder(PIGO_Message_IDs_e* type, uint
                         case MESSAGE_ID_NUM_WAYPOINTS:
                         case MESSAGE_ID_HOLDING_ALTITUDE:
                         case MESSAGE_ID_HOLDING_TURN_RADIUS:
-                        case MESSAGE_ID_PATH_MODIFY_NEXT_LD:
-                        case MESSAGE_ID_PATH_MODIFY_PREV_LD:
-                        case MESSAGE_ID_PATH_MODIFY_LD:
+                        case MESSAGE_ID_PATH_MODIFY_NEXT_ID:
+                        case MESSAGE_ID_PATH_MODIFY_PREV_ID:
+                        case MESSAGE_ID_PATH_MODIFY_ID:
                         {
                             four_bytes_int_cmd_t command;
                             memset(&command, 0x00, sizeof(four_bytes_int_cmd_t));
@@ -254,7 +254,7 @@ mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_e msgID, mavl
         break;
 
         case MESSAGE_ID_AIR_SPEED:
-        case MESSAGE_ID_CURRENT_WAYPOINT_LD:
+        case MESSAGE_ID_CURRENT_WAYPOINT_ID:
         case MESSAGE_ID_CURRENT_WAYPOINT_INDEX:
         {
             four_bytes_int_cmd_t* numWaypoint_cmd = (four_bytes_int_cmd_t*) struct_ptr;
@@ -329,6 +329,13 @@ mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_e msgID, mavl
         return MAVLINK_ENCODING_FAIL;
     }
 }
+
+
+
+/*
+
+
+
 
 //---------------------------------------- tests -----------------------------------------------------------------------------
 //an example of how to use the encoder and decoder
@@ -406,7 +413,7 @@ int test__encode_then_decode(void)
         }
     }
 
-    if (decoderStatus == MAVLINK_DECODING_OKAY)
+    if (decoderStatus == MAVLINK_DECODING_OKAY) 
     {
         int result = 1;
 
@@ -476,7 +483,7 @@ int test__encode_then_decode(void)
     return 0;
 }
 
-/*
+
 int main(void) // TODO: this main needs to be removed once integrated
 {
     test__encode_then_decode();
@@ -484,4 +491,3 @@ int main(void) // TODO: this main needs to be removed once integrated
     return 0;
 }
 */
-

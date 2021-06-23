@@ -14,15 +14,15 @@
 
 enum mavlink_decoding_status_t{
     MAVLINK_DECODING_INCOMPLETE=0,
-    MAVLINK_DECODING_OKAY=1,
-    MAVLINK_DECODING_FAIL=2,
+    MAVLINK_DECODING_OKAY,
+    MAVLINK_DECODING_FAIL,
 };
 
 enum mavlink_encoding_status_t{
     MAVLINK_ENCODING_INCOMPLETE=0,
-    MAVLINK_ENCODING_OKAY=1,
-    MAVLINK_ENCODING_BAD_ID = 2,
-    MAVLINK_ENCODING_FAIL=3,
+    MAVLINK_ENCODING_OKAY,
+    MAVLINK_ENCODING_BAD_ID,
+    MAVLINK_ENCODING_FAIL,
 };
 
 //airside decoder, Plane In Ground Out (PIGO)
@@ -40,9 +40,9 @@ enum PIGO_Message_IDs_e{
     MESSAGE_ID_HOLDING_ALTITUDE,
     MESSAGE_ID_HOLDING_TURN_RADIUS,
     MESSAGE_ID_HOLDING_TURN_DIRECTION,
-    MESSAGE_ID_PATH_MODIFY_NEXT_LD,
-    MESSAGE_ID_PATH_MODIFY_PREV_LD,
-    MESSAGE_ID_PATH_MODIFY_LD,
+    MESSAGE_ID_PATH_MODIFY_NEXT_ID,
+    MESSAGE_ID_PATH_MODIFY_PREV_ID,
+    MESSAGE_ID_PATH_MODIFY_ID,
     MESSAGE_ID_WAYPOINTS,
     MESSAGE_ID_HOMEBASE,
 };
@@ -58,7 +58,7 @@ enum POGI_Message_IDs_e{
     MESSAGE_ID_IS_LANDED,
     MESSAGE_ID_EDITING_FLIGHT_PATH_ERROR_CODE,
     MESSAGE_ID_FLIGHT_PATH_FOLLOWING_ERROR_CODE,
-    MESSAGE_ID_CURRENT_WAYPOINT_LD,
+    MESSAGE_ID_CURRENT_WAYPOINT_ID,
     MESSAGE_ID_CURRENT_WAYPOINT_INDEX,
     MESSAGE_ID_HOMEBASE_INITIALIZED,
 };
@@ -174,8 +174,7 @@ mavlink_decoding_status_t Mavlink_airside_decoder(PIGO_Message_IDs_e* type, uint
  */
 mavlink_encoding_status_t Mavlink_airside_encoder(POGI_Message_IDs_e id, mavlink_message_t *message, const uint8_t *struct_ptr);
 
-int test__encode_then_decode(void);
+// int test__encode_then_decode(void);
 
 
 #endif //AIRSIDE_FUNCTIONS_HPP
-
